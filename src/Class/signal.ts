@@ -20,33 +20,19 @@ class Signal extends EventEmitter{
   	async createRoom(): Promise<string> {
 		const response = await fetch(`${this.signallingServer}/rooms/create`, { method: "POST" });
 		const id = await response.text();
-		
-		this.roomId = id;
-		this.channel = this.pusher.subscribe(`cache-${id}`);
-		this.socketId = this.pusher.connection.socket_id;	
+		this.subscribeToChannel(id);
   		return id
 	}
 	
 	async sendOffer(offer: string): Promise<string> {
-		await fetch(`${this.signallingServer}/rooms/${this.roomId}/offer`, { method: "POST", body: offer });
-		this.channel.bind("ice", (ice) => {
-			this.emit("ice", ice);
-		})	
+		fetch(`${this.signallingServer}/rooms/${this.roomId}/offer`, { method: "POST", body: offer });
 		const response = await fetch(`${this.signallingServer}/rooms/${this.roomId}/answer`);
-		const answer = await response.text();
-		return answer;
+		return (await response.text());
 	}
 
 	async getOffer(id: string): Promise<string> { 
-		this.roomId = id;
+		this.subscribeToChannel(id);
 		const response = await fetch(`${this.signallingServer}/rooms/${id}/offer`);
-
-		this.channel = this.pusher.subscribe(`cache-${id}`);
-		this.socketId = this.pusher.connection.socket_id;
-
-		this.channel.bind("ice", (ice) => {
-			this.emit("ice", ice);
-		})
 		return (await response.text());
 	}
 
@@ -61,6 +47,15 @@ class Signal extends EventEmitter{
 	async closeRoom() {
 		fetch(`${this.signallingServer}/rooms/${this.roomId}`, {method: "DELETE"})
 	}
+		
+	private subscribeToChannel(id: string) {
+		this.roomId = id;
+		this.channel = this.pusher.subscribe(`cache-${id}`);
+		this.socketId = this.pusher.connection.socket_id;
+		this.channel.bind("ice", (ice) => {
+			this.emit("ice", ice);
+		})
+	}	
 }
 
 export default Signal
