@@ -20,7 +20,7 @@
 
 <svelte:head>
     <title>{title}</title>
-    <link rel="stylesheet" href="node_modules/bulma/css/bulma.min.css">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bulma@0.9.4/css/bulma.min.css">
 </svelte:head>
 
 <style>
