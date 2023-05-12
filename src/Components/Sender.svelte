@@ -63,6 +63,8 @@
 
         const answer = new RTCSessionDescription({ type: "answer", sdp: answerSDP });
         lc.setRemoteDescription(answer);
+        status = "Connecting";
+        state = 3;
       } catch (error) {
         console.error(error);
         status = "Error occurred";
