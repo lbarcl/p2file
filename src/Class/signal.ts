@@ -4,7 +4,7 @@ import { EventEmitter } from "./eventemitter";
 class Signal extends EventEmitter{
   	private pusher: Pusher;
 	private channel: Channel;
-	private signallingServer = "http://webrtcsignalingserver.lbarcl.repl.co";
+	private signallingServer = "https://webrtc-signal.proxifi.ga";
 	private socketId: string;
 	roomId: string;
 	constructor() {
