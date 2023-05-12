@@ -71,7 +71,7 @@
         timeOut = setTimeout(() => {
           if (status == "Connecting") { 
             sg.closeRoom();
-            dataChannel.close();
+            dataChannel?.close();
             dataChannel = null;
             sg = null;
             lc = null;
