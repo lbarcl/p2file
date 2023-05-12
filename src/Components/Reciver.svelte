@@ -9,6 +9,7 @@
     let lc: RTCPeerConnection;
     let dataChannel: RTCDataChannel;
     let sg: Signal;
+    let timeOut: NodeJS.Timeout;
 
     async function connect() {
       if (!roomId) {
@@ -36,6 +37,15 @@
         await lc.setLocalDescription(answer);
         sg.sendAnswer(answer.sdp);
 
+        timeOut = setTimeout(() => {
+          if (status == "Connecting") { 
+            sg = null;
+            lc = null;
+            status = "Timeout";
+            state = 0;
+          }
+        }, 120000)
+
         lc.ondatachannel = onDataChannel;
         lc.onicecandidate = onIceCandidate;
 
@@ -55,6 +65,7 @@
       dataChannel = channel;
       dataChannel.onopen = () => {
         status = "Connected";
+        clearTimeout(timeOut);
       };
       dataChannel.onclose = () => {
         lc.close();

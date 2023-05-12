@@ -9,6 +9,7 @@
     let lc: RTCPeerConnection;
     let dataChannel: RTCDataChannel;
     let sg: Signal;
+    let timeOut: NodeJS.Timeout;
 
     async function createRoom() {
       lc = window.RTCPeerConnection ? new RTCPeerConnection({ iceServers: stunList }) : null;
@@ -41,6 +42,7 @@
       dataChannel.onopen = () => {
         status = "Connected";
         state = 2;
+        clearTimeout(timeOut);
       };
 
       dataChannel.onclose = () => {
@@ -65,6 +67,19 @@
         lc.setRemoteDescription(answer);
         status = "Connecting";
         state = 3;
+
+        timeOut = setTimeout(() => {
+          if (status == "Connecting") { 
+            sg.closeRoom();
+            dataChannel.close();
+            dataChannel = null;
+            sg = null;
+            lc = null;
+            status = "Timeout";
+            state = 0;
+          }
+        }, 120000)
+
       } catch (error) {
         console.error(error);
         status = "Error occurred";
