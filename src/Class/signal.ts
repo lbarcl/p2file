@@ -22,7 +22,7 @@ class Signal extends EventEmitter{
 		const id = await response.text();
 		
 		this.roomId = id;
-		this.channel = this.pusher.subscribe(id);
+		this.channel = this.pusher.subscribe(`cache-${id}`);
 		this.socketId = this.pusher.connection.socket_id;	
   		return id
 	}
@@ -32,18 +32,16 @@ class Signal extends EventEmitter{
 		this.channel.bind("ice", (ice) => {
 			this.emit("ice", ice);
 		})	
-		return new Promise<string>((resolve, reject) => { 
-			this.channel.bind("answer", (sdp) => {
-				resolve(sdp);
-			})
-		});
+		const response = await fetch(`${this.signallingServer}/rooms/${this.roomId}/answer`);
+		const answer = await response.text();
+		return answer;
 	}
 
 	async getOffer(id: string): Promise<string> { 
 		this.roomId = id;
 		const response = await fetch(`${this.signallingServer}/rooms/${id}/offer`);
 
-		this.channel = this.pusher.subscribe(id);
+		this.channel = this.pusher.subscribe(`cache-${id}`);
 		this.socketId = this.pusher.connection.socket_id;
 
 		this.channel.bind("ice", (ice) => {
