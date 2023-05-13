@@ -1,6 +1,7 @@
 lockfileVersion: 5.4
 
 specifiers:
+  '@sentry/svelte': ^7.51.2
   '@sveltejs/vite-plugin-svelte': ^2.0.3
   '@tsconfig/svelte': ^4.0.1
   '@types/node': ^20.1.1
@@ -13,6 +14,7 @@ specifiers:
   vite: ^4.3.2
 
 dependencies:
+  '@sentry/svelte': 7.51.2_svelte@3.59.1
   bulma: 0.9.4
   pusher-js: 8.0.2
 
@@ -266,6 +268,73 @@ packages:
       '@nodelib/fs.scandir': 2.1.5
       fastq: 1.15.0
     dev: true
+
+  /@sentry-internal/tracing/7.51.2:
+    resolution: {integrity: sha512-OBNZn7C4CyocmlSMUPfkY9ORgab346vTHu5kX35PgW5XR51VD2nO5iJCFbyFcsmmRWyCJcZzwMNARouc2V4V8A==}
+    engines: {node: '>=8'}
+    dependencies:
+      '@sentry/core': 7.51.2
+      '@sentry/types': 7.51.2
+      '@sentry/utils': 7.51.2
+      tslib: 1.14.1
+    dev: false
+
+  /@sentry/browser/7.51.2:
+    resolution: {integrity: sha512-FQFEaTFbvYHPQE2emFjNoGSy+jXplwzoM/XEUBRjrGo62lf8BhMvWnPeG3H3UWPgrWA1mq0amvHRwXUkwofk0g==}
+    engines: {node: '>=8'}
+    dependencies:
+      '@sentry-internal/tracing': 7.51.2
+      '@sentry/core': 7.51.2
+      '@sentry/replay': 7.51.2
+      '@sentry/types': 7.51.2
+      '@sentry/utils': 7.51.2
+      tslib: 1.14.1
+    dev: false
+
+  /@sentry/core/7.51.2:
+    resolution: {integrity: sha512-p8ZiSBxpKe+rkXDMEcgmdoyIHM/1bhpINLZUFPiFH8vzomEr7sgnwRhyrU8y/ADnkPeNg/2YF3QpDpk0OgZJUA==}
+    engines: {node: '>=8'}
+    dependencies:
+      '@sentry/types': 7.51.2
+      '@sentry/utils': 7.51.2
+      tslib: 1.14.1
+    dev: false
+
+  /@sentry/replay/7.51.2:
+    resolution: {integrity: sha512-W8YnSxkK9LTUXDaYciM7Hn87u57AX9qvH8jGcxZZnvpKqHlDXOpSV8LRtBkARsTwgLgswROImSifY0ic0lyCWg==}
+    engines: {node: '>=12'}
+    dependencies:
+      '@sentry/core': 7.51.2
+      '@sentry/types': 7.51.2
+      '@sentry/utils': 7.51.2
+    dev: false
+
+  /@sentry/svelte/7.51.2_svelte@3.59.1:
+    resolution: {integrity: sha512-eeMtovC0U5cZyT0X1ervgo4iMqJ8ID+0lfoJltxcFHTVoY2+EnvfOqAAXd8fVS+S8oKGqaQCIMJ+2BUXRKKatQ==}
+    engines: {node: '>=8'}
+    peerDependencies:
+      svelte: 3.x
+    dependencies:
+      '@sentry/browser': 7.51.2
+      '@sentry/types': 7.51.2
+      '@sentry/utils': 7.51.2
+      magic-string: 0.26.7
+      svelte: 3.59.1
+      tslib: 1.14.1
+    dev: false
+
+  /@sentry/types/7.51.2:
+    resolution: {integrity: sha512-/hLnZVrcK7G5BQoD/60u9Qak8c9AvwV8za8TtYPJDUeW59GrqnqOkFji7RVhI7oH1OX4iBxV+9pAKzfYE6A6SA==}
+    engines: {node: '>=8'}
+    dev: false
+
+  /@sentry/utils/7.51.2:
+    resolution: {integrity: sha512-EcjBU7qG4IG+DpIPvdgIBcdIofROMawKoRUNKraeKzH/waEYH9DzCaqp/mzc5/rPBhpDB4BShX9xDDSeH+8c0A==}
+    engines: {node: '>=8'}
+    dependencies:
+      '@sentry/types': 7.51.2
+      tslib: 1.14.1
+    dev: false
 
   /@sveltejs/vite-plugin-svelte/2.2.0_svelte@3.59.1+vite@4.3.5:
     resolution: {integrity: sha512-KDtdva+FZrZlyug15KlbXuubntAPKcBau0K7QhAIqC5SAy0uDbjZwoexDRx0L0J2T4niEfC6FnA9GuQQJKg+Aw==}
@@ -559,6 +628,13 @@ packages:
       sourcemap-codec: 1.4.8
     dev: true
 
+  /magic-string/0.26.7:
+    resolution: {integrity: sha512-hX9XH3ziStPoPhJxLq1syWuZMxbDvGNbVchfrdCtanC7D13888bMFow61x8axrx+GfHLtVeAx2kxL7tTGRl+Ow==}
+    engines: {node: '>=12'}
+    dependencies:
+      sourcemap-codec: 1.4.8
+    dev: false
+
   /magic-string/0.30.0:
     resolution: {integrity: sha512-LA+31JYDJLs82r2ScLrlz1GjSgu66ZV518eyWT+S8VhyQn/JL0u9MeBOvQMGYiPk1DBiSN9DDMOcXvigJZaViQ==}
     engines: {node: '>=12'}
@@ -751,7 +827,6 @@ packages:
   /sourcemap-codec/1.4.8:
     resolution: {integrity: sha512-9NykojV5Uih4lgo5So5dtw+f0JgJX30KCNI8gwhz2J9A15wD0Ml6tjHKwf6fTSa6fAdVBdZeNOs9eJ71qCk8vA==}
     deprecated: Please use @jridgewell/sourcemap-codec instead
-    dev: true
 
   /strip-indent/3.0.0:
     resolution: {integrity: sha512-laJTa3Jb+VQpaC6DseHhF7dXVqHTfJPCRDaEbid/drOhgitgYku/letMUqOXFoWV0zIIUbjpdH2t+tYj4bQMRQ==}
@@ -851,7 +926,6 @@ packages:
   /svelte/3.59.1:
     resolution: {integrity: sha512-pKj8fEBmqf6mq3/NfrB9SLtcJcUvjYSWyePlfCqN9gujLB25RitWK8PvFzlwim6hD/We35KbPlRteuA6rnPGcQ==}
     engines: {node: '>= 8'}
-    dev: true
 
   /to-regex-range/5.0.1:
     resolution: {integrity: sha512-65P7iz6X5yEr1cwcgvQxbbIw7Uk3gOy5dIdtZ4rDveLqhrdJP+Li/Hx6tyK0NEb+2GCyneCMJiGqrADCSNk8sQ==}
@@ -859,6 +933,10 @@ packages:
     dependencies:
       is-number: 7.0.0
     dev: true
+
+  /tslib/1.14.1:
+    resolution: {integrity: sha512-Xni35NKzjgMrwevysHTCArtLDpPvye8zV/0E4EyYn43P7/7qvQwPh9BGkHewbMulVntbigmcT7rdX3BNo9wRJg==}
+    dev: false
 
   /tslib/2.5.0:
     resolution: {integrity: sha512-336iVw3rtn2BUK7ORdIAHTyxHGRIHVReokCR3XjbckJMK7ms8FysBfhLR8IXnAgy7T0PTPNBWKiH514FOW/WSg==}

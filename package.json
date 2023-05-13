@@ -20,6 +20,7 @@
     "vite": "^4.3.2"
   },
   "dependencies": {
+    "@sentry/svelte": "^7.51.2",
     "bulma": "^0.9.4",
     "pusher-js": "^8.0.2"
   }
