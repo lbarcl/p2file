@@ -1,6 +1,7 @@
 <script lang="ts">
-    import { stunList } from "../rtconfig";
+    import { stunList } from "../Utils/rtconfig";
     import Signal from "../Class/signal";
+    import Transmitter from "./Transmitter.svelte";
 
     let status = "Not connected";
     let state = 0;
@@ -21,14 +22,15 @@
       }
 
       sg = new Signal();
-      lc.onnegotiationneeded = onNegotiationNeeded;
-
       if (lc.onicecandidate !== undefined) {
         lc.onicecandidate = onIceCandidate;
       }
+      lc.onnegotiationneeded = onNegotiationNeeded;
 
       //@ts-ignore
       sg.on("ice", ({ data }) => {
+        if (data == null) return;
+
         const iceCandidate = new RTCIceCandidate(data);
         lc.addIceCandidate(iceCandidate);
       });
@@ -62,11 +64,13 @@
         await lc.setLocalDescription();
         status = "Waiting for other peer";
         const answerSDP = await sg.sendOffer(lc.localDescription.sdp);
-
+        
+        
         const answer = new RTCSessionDescription({ type: "answer", sdp: answerSDP });
         lc.setRemoteDescription(answer);
         status = "Connecting";
         state = 3;
+        
 
         timeOut = setTimeout(() => {
           if (status == "Connecting") { 
@@ -95,10 +99,15 @@
 </script>
 
 <style>
-    .middle {
-        width: 75%;
-        height: 50px;
-    }
+  .middle {
+      width: 75%;
+      height: 30px;
+  }
+
+  progress {
+      width: 75%;
+      height: 30px;
+  }
 </style>
 
 <h2 class="has-text-primary title mt-2">Transmit</h2>
@@ -108,9 +117,9 @@
 {:else if state == 1}
 <input type="text" placeholder="Room ID" class="input has-text-white has-background-grey-dark middle" readonly bind:value={roomId}>
 {:else if state == 2}
-Choose file
+<Transmitter dataChannel={dataChannel} />
 {:else if state == 3}
-<progress class="progress is-primary middle" max="100"></progress>
+<progress class="progress is-primary" max="100"></progress>
 {/if}
 
 <p class="mt-2 mb-4">Status: <strong>{status}</strong></p>
