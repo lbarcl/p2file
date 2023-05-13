@@ -42,11 +42,12 @@ class Signal extends EventEmitter{
 	}
 
 	sendIce(ice: string) {
+
 		if (this.socketId === undefined) { 
-			console.log("No socket id")
+			this.socketId = this.pusher.connection.socket_id;
 			setTimeout(() => {
 				this.sendIce(ice);
-			}, 2500);
+			}, 500);
 		} else {
 			fetch(`${this.signallingServer}/rooms/${this.roomId}/ice?socketID=${this.socketId}`, { method: "POST", body: ice });
 		}
