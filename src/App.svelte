@@ -1,6 +1,6 @@
 <script lang="ts">
-    import FileTransmitter from "./Components/Filetransmitter.svelte";
-    import FileReciver from "./Components/Filereciver.svelte";
+    import FileTransmitter from "./Components/Transmitter.svelte";
+    import FileReciver from "./Components/Reciver.svelte";
     let title = "p2file";
     let state = 0; 
 

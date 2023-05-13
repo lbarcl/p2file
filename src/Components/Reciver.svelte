@@ -1,93 +1,119 @@
 <script lang="ts">
-    import { concatArrayBuffers, hexStringToArrayBuffer } from "../Utils/reciver";
-    import { calculateEstimatedTimeOfArrival, calculateCompletionPercentage, secondsToString } from "../Utils/helpers";
-    export let dataChannel: RTCDataChannel;
-    const receivedChunks: ArrayBuffer[] = [];
-    let receivedChunkCount: number = 0;
-    let totalChunkCount: number;
-    let fileMeta: fileMetaData = null;
+    import { getIceServers } from "../Utils/rtconfig";
+    import Signal from "../Class/signal";
+    import Reciver from "./Rx.svelte";
 
-    let eta: number;
-    let percentage: number;
-    let lastProgressUpdate: number;
+    let status = "Not connected";
+    let state = 0;
+    let roomId = "";
 
-    let metaDataReady: boolean = false;
-    let onProgress: boolean = false;
-    let done: boolean = false;
+    let lc: RTCPeerConnection;
+    let dataChannel: RTCDataChannel;
+    let sg: Signal;
+    let timeOut: NodeJS.Timeout;
 
-    let url: string;
-    
-    dataChannel.onmessage = onMessage;
+    async function connect() {
+      if (!roomId) {
+        alert("Please enter roomId");
+        return;
+      }
 
-    async function onMessage(event: MessageEvent) {
-        try {
-            const packet = JSON.parse(event.data);
-            const packetId = packet.id;
-            const packetData = packet.data;
+      const iceServers = await getIceServers();
+      lc = window.RTCPeerConnection ? new RTCPeerConnection({ iceServers }) : null;
+      if (!lc) {
+        console.log("RTCPeerConnection not supported");
+        alert("WebRTC is not supported!");
+        return;
+      }
 
-            if (!metaDataReady) {
-                // This is a metadata packet, ignore it
-                //@ts-ignore
-                fileMeta = JSON.parse(packetData);
-                totalChunkCount = fileMeta.totalChunkCount;
-                onProgress = true;
-                metaDataReady = true;
-            } else if (metaDataReady) {
-                if (receivedChunkCount == 0) lastProgressUpdate = Date.now();
+      if (lc.onicecandidate !== undefined) {
+        lc.onicecandidate = onIceCandidate;
+      }
+      
+      sg = new Signal();
+      status = "Connecting";
+      state = 1;
 
-                // This is a chunk packet
-                receivedChunks.push(hexStringToArrayBuffer(packetData));
-                receivedChunkCount++;
-                
-                const now = Date.now();
-                percentage = calculateCompletionPercentage(receivedChunkCount, totalChunkCount);
-                eta = calculateEstimatedTimeOfArrival(lastProgressUpdate, now, fileMeta.chunkSize, (totalChunkCount - receivedChunkCount));
-                lastProgressUpdate = now;
+      try {
+        const offerSDP = await sg.getOffer(roomId);
+        const offer = new RTCSessionDescription({ type: "offer", sdp: offerSDP });
+        await lc.setRemoteDescription(offer);
+        
+        const answer = await lc.createAnswer();
+        await lc.setLocalDescription(answer);
+        sg.sendAnswer(answer.sdp);
+        
 
-                // Check if we've received all the chunks
-                if (receivedChunkCount === totalChunkCount) {
-                    url = URL.createObjectURL(new Blob([new Uint8Array(concatArrayBuffers(receivedChunks))], {type: fileMeta.type}));
-                    dataChannel.removeEventListener("message", onMessage);
-                    onProgress = false;
-                    done = true;
-                }
-            }
+        timeOut = setTimeout(() => {
+          if (status == "Connecting") { 
+            sg = null;
+            lc = null;
+            status = "Timeout";
+            state = 0;
+          }
+        }, 120000)
 
-            dataChannel.send(JSON.stringify({id: packetId}));
-        } catch (error) {
-            console.error(`Error parsing packet:`, error);
+        lc.ondatachannel = onDataChannel;
+
+        //@ts-ignore
+        sg.on("ice", ({ data }) => {
+          if (data == null || lc.remoteDescription == null) return;
+
+          const iceCandidate = new RTCIceCandidate(data);
+          lc.addIceCandidate(iceCandidate);
+        });
+
+      } catch (error) {
+        console.error(error);
+        status = "Error occurred";
+      }
+    }
+
+    function onDataChannel({ channel }) {
+      dataChannel = channel;
+      dataChannel.onopen = () => {
+        status = "Connected";
+        state = 2;
+        clearTimeout(timeOut);
+      };
+      dataChannel.onclose = () => {
+        lc.close();
+        status = "Not connected";
+        state = 0;
+      };
+
+      dataChannel.onmessage = e => {
+        console.log(e.data);
+      }
+    }
+
+    function onIceCandidate(e: RTCPeerConnectionIceEvent) {
+        if (e.candidate != null) {
+            sg.sendIce(JSON.stringify(e.candidate.toJSON()));
         }
     }
 
-    function onPressedSave() {
-        setTimeout(() => {
-            URL.revokeObjectURL(url);
-            dataChannel.close();
-        }, 10000);
-    }
-
-    interface fileMetaData { 
-        name: string,
-        type: string,
-        size: number,
-        totalChunkCount: number,
-        chunkSize: number
-    }
 </script>
 
 <style>
-    progress {
-        width: 75%;
-        height: 30px;
-    }
+  progress {
+      width: 75%;
+      height: 30px;
+  }
 </style>
 
-{#if !onProgress && !done} 
-<p>Waiting for file</p>
-<progress class="progress is-primary"></progress>
-{:else if onProgress && !done}
-<p>Receiving {fileMeta.name} | <strong>{secondsToString(eta / 1000)}</strong> Left | {Math.round(percentage)}%</p>
-<progress class="progress is-primary" value={receivedChunkCount} max={totalChunkCount}></progress>
-{:else}
-<a class="tag is-primary" href={url} download={fileMeta.name} on:click={onPressedSave}>Save to computer</a>
+<h2 class="has-text-primary title mt-2">Receive</h2>
+
+
+{#if state == 0}
+<div class="is-flex is-flex-direction-row">
+    <input type="text" placeholder="Room ID" class="input has-text-white has-background-grey-dark" bind:value={roomId}>
+    <button class="button is-primary ml-2" on:click={connect}>Connect</button>
+</div>
+{:else if state == 1}
+<progress class="progress is-primary" max="100">15%</progress>
+{:else if state == 2}
+<Reciver dataChannel={dataChannel} />
 {/if}
+
+<p class="ml-2 mb-4">Status: <strong>{status}</strong></p>

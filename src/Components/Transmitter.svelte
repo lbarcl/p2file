@@ -1,85 +1,126 @@
 <script lang="ts">
-    import { send } from "../Utils/sender";
-    import { calculateEstimatedTimeOfArrival, calculateCompletionPercentage, chunkArrayBuffer, secondsToString } from "../Utils/helpers";
-    export let dataChannel: RTCDataChannel;
-    const CHUNK_SIZE = 4000;
+    import { getIceServers } from "../Utils/rtconfig";
+    import Signal from "../Class/signal";
+    import Transmitter from "./Tx.svelte";
 
-    let files: FileList;
-    
-    let sentChunkCount: number = 0;
-    let totalChunkCount: number;
-    
-    let eta: number;
-    let percentage: number;
-    let onProgress: boolean = false;
-    let done: boolean = false;
+    let status = "Not connected";
+    let state = 0;
+    let roomId = "";
 
-    async function sendFile() {
-        const file = files[0];
+    let lc: RTCPeerConnection;
+    let dataChannel: RTCDataChannel;
+    let sg: Signal;
+    let timeOut: NodeJS.Timeout;
 
-        const data = await file.arrayBuffer();
-        const chunks = chunkArrayBuffer(data, CHUNK_SIZE);
-        await send(dataChannel, JSON.stringify({
-            name: file.name,
-            type: file.type,
-            size: file.size,
-            totalChunkCount: chunks.length,
-            chunkSize: CHUNK_SIZE
-        }));
+    async function createRoom() {
+      const iceServers = await getIceServers();
+      lc = window.RTCPeerConnection ? new RTCPeerConnection({ iceServers }) : null;
 
-        onProgress = true;
-        totalChunkCount = chunks.length;
-        while (sentChunkCount !== chunks.length) {
-            try {
-                const timeBeforeSend = Date.now();
-                await send(dataChannel, chunks[sentChunkCount]);
-                sentChunkCount++;
-                eta = calculateEstimatedTimeOfArrival(timeBeforeSend, Date.now(), CHUNK_SIZE, (totalChunkCount - sentChunkCount));
-                percentage = calculateCompletionPercentage(sentChunkCount, totalChunkCount);
-            } catch (error) {
-                console.error(`Error sending chunk ${sentChunkCount}`, error);
-            }
-        }
-        onProgress = false;
-        done = true;
+      if (!lc) {
+        console.log("RTCPeerConnection not supported");
+        alert("WebRTC is not supported!");
+        return;
+      }
+
+      sg = new Signal();
+      if (lc.onicecandidate !== undefined) {
+        lc.onicecandidate = onIceCandidate;
+      }
+      lc.onnegotiationneeded = onNegotiationNeeded;
+
+      //@ts-ignore
+      sg.on("ice", ({ data }) => {
+        if (data == null) return;
+
+        const iceCandidate = new RTCIceCandidate(data);
+        lc.addIceCandidate(iceCandidate);
+      });
+
+      createDataChannel();
     }
+
+    function createDataChannel() {
+      dataChannel = lc.createDataChannel("file", { ordered: true, maxRetransmits: 5 });
+
+      dataChannel.onopen = () => {
+        status = "Connected";
+        state = 2;
+        clearTimeout(timeOut);
+      };
+
+      dataChannel.onclose = () => {
+        lc.close();
+        sg.closeRoom();
+        status = "Not connected";
+        state = 0;
+      };
+    }
+
+    async function onNegotiationNeeded() {
+      try {
+        state = 1;
+        status = "Creating room";
+        roomId = await sg.createRoom();
+
+        await lc.setLocalDescription();
+        status = "Waiting for other peer";
+        const answerSDP = await sg.sendOffer(lc.localDescription.sdp);
+        
+        
+        const answer = new RTCSessionDescription({ type: "answer", sdp: answerSDP });
+        lc.setRemoteDescription(answer);
+        status = "Connecting";
+        state = 3;
+        
+
+        timeOut = setTimeout(() => {
+          if (status == "Connecting") { 
+            sg.closeRoom();
+            dataChannel?.close();
+            dataChannel = null;
+            sg = null;
+            lc = null;
+            status = "Timeout";
+            state = 0;
+          }
+        }, 120000)
+
+      } catch (error) {
+        console.error(error);
+        status = "Error occurred";
+      }
+    }
+
+    function onIceCandidate(e: RTCPeerConnectionIceEvent) {
+      if (e.candidate != null) {
+        sg.sendIce(JSON.stringify(e.candidate.toJSON()));
+      }
+    }
+
 </script>
 
 <style>
-    progress {
-        width: 75%;
-        height: 30px;
-    }
+  .middle {
+      width: 75%;
+      height: 30px;
+  }
+
+  progress {
+      width: 75%;
+      height: 30px;
+  }
 </style>
 
+<h2 class="has-text-primary title mt-2">Transmit</h2>
 
-{#if !onProgress && !done}
-<div class="file is-primary has-name mx-4">
-    <label class="file-label">
-        <input class="file-input" type="file" name="resume" bind:files={files}>
-        <span class="file-cta">
-            <span class="file-icon">
-                <i class="fas fa-upload"></i>
-            </span>
-            <span class="file-label">
-                File to send
-            </span>
-        </span>
-        <span class="file-name">
-            {#if files?.length > 0}
-            {files[0]?.name}
-            {:else}
-            Please choose a file
-            {/if}
-        </span>
-    </label>
-</div>
-
-
-<button class="button is-primary is-light mt-2" on:click={sendFile}>Send</button>
-{:else if onProgress && !done}
-<p>Transmiting {files[0].name} | <strong>{secondsToString(eta / 1000)}</strong> Left | {Math.round(percentage)}%</p>
-<progress class="progress is-primary" value={sentChunkCount} max={totalChunkCount}></progress>
-{:else}
-Please don't close the window while the other peer secures the file
+{#if state == 0}
+<button class="button is-primary ml-2" on:click={createRoom}>Create room</button>
+{:else if state == 1}
+<input type="text" placeholder="Room ID" class="input has-text-white has-background-grey-dark middle" readonly bind:value={roomId}>
+{:else if state == 2}
+<Transmitter dataChannel={dataChannel} />
+{:else if state == 3}
+<progress class="progress is-primary" max="100"></progress>
 {/if}
+
+<p class="mt-2 mb-4">Status: <strong>{status}</strong></p>
