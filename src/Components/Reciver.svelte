@@ -81,13 +81,10 @@
         status = "Not connected";
         state = 0;
       };
-
-      dataChannel.onmessage = e => {
-        console.log(e.data);
-      }
     }
 
     function onIceCandidate(e: RTCPeerConnectionIceEvent) {
+        console.log(e.candidate);
         if (e.candidate != null) {
             sg.sendIce(JSON.stringify(e.candidate.toJSON()));
         }
