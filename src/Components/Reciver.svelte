@@ -84,8 +84,8 @@
     }
 
     function onIceCandidate(e: RTCPeerConnectionIceEvent) {
-        console.log(e.candidate);
         if (e.candidate != null) {
+            console.log(e.candidate);
             sg.sendIce(JSON.stringify(e.candidate.toJSON()));
         }
     }
