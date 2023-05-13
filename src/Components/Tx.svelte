@@ -16,26 +16,28 @@
 
     async function sendFile() {
         const file = files[0];
-
-        const data = await file.arrayBuffer();
-        const chunks = chunkArrayBuffer(data, CHUNK_SIZE);
+        totalChunkCount = Math.floor(file.size / CHUNK_SIZE);
         await send(dataChannel, JSON.stringify({
             name: file.name,
             type: file.type,
             size: file.size,
-            totalChunkCount: chunks.length,
+            totalChunkCount,
             chunkSize: CHUNK_SIZE
         }));
 
         onProgress = true;
-        totalChunkCount = chunks.length;
-        while (sentChunkCount !== chunks.length) {
+        var lastReadByte: number = 0;
+        var lastSentTime: number = 0;
+        while (sentChunkCount !== Math.floor(file.size / CHUNK_SIZE)) {
             try {
-                const timeBeforeSend = Date.now();
-                await send(dataChannel, chunks[sentChunkCount]);
+                const data = await file.slice(lastReadByte, lastReadByte + CHUNK_SIZE).arrayBuffer();
+                lastReadByte += CHUNK_SIZE;
+                await send(dataChannel, data);
                 sentChunkCount++;
-                eta = calculateEstimatedTimeOfArrival(timeBeforeSend, Date.now(), CHUNK_SIZE, (totalChunkCount - sentChunkCount));
+                
+                eta = calculateEstimatedTimeOfArrival(lastSentTime, Date.now(), CHUNK_SIZE, (totalChunkCount - sentChunkCount));
                 percentage = calculateCompletionPercentage(sentChunkCount, totalChunkCount);
+                lastSentTime = Date.now();
             } catch (error) {
                 console.error(`Error sending chunk ${sentChunkCount}`, error);
             }

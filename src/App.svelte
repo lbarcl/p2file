@@ -1,6 +1,7 @@
 <script lang="ts">
     import FileTransmitter from "./Components/Transmitter.svelte";
     import FileReciver from "./Components/Reciver.svelte";
+    import adapter from 'webrtc-adapter';
 
     let title = "p2file";
     let state = 0; 

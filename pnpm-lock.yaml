@@ -10,6 +10,9 @@ dependencies:
   pusher-js:
     specifier: ^8.0.2
     version: 8.0.2
+  webrtc-adapter:
+    specifier: ^8.2.2
+    version: 8.2.2
 
 devDependencies:
   '@sveltejs/vite-plugin-svelte':
@@ -818,6 +821,10 @@ packages:
       source-map-js: 1.0.2
     dev: true
 
+  /sdp@3.2.0:
+    resolution: {integrity: sha512-d7wDPgDV3DDiqulJjKiV2865wKsJ34YI+NDREbm+FySq6WuKOikwyNQcm+doLAZ1O6ltdO0SeKle2xMpN3Brgw==}
+    dev: false
+
   /sorcery@0.10.0:
     resolution: {integrity: sha512-R5ocFmKZQFfSTstfOtHjJuAwbpGyf9qjQa1egyhvXSbM7emjrtLXtGdZsDJDABC85YBfVvrOiGWKSYXPKdvP1g==}
     hasBin: true
@@ -1004,6 +1011,13 @@ packages:
     dependencies:
       vite: 4.3.5(@types/node@20.1.1)
     dev: true
+
+  /webrtc-adapter@8.2.2:
+    resolution: {integrity: sha512-jQWwqiAEAFZamWliJo0Q+dIC6ZMJ8BgCFvW/oXWVFby1Nw14dOUfPwZ3lVe4nafDXdTyCUT7xfLt5xXiioXUCQ==}
+    engines: {node: '>=6.0.0', npm: '>=3.10.0'}
+    dependencies:
+      sdp: 3.2.0
+    dev: false
 
   /wrappy@1.0.2:
     resolution: {integrity: sha512-l4Sp/DRseor9wL6EvV2+TuQn63dMkPjZ/sp9XkghTEbV9KlPS1xUsZ3u7/IQO4wxtcFB4bgpQPRcR3QCvezPcQ==}
