@@ -22,6 +22,7 @@
   "dependencies": {
     "@sentry/svelte": "^7.51.2",
     "bulma": "^0.9.4",
-    "pusher-js": "^8.0.2"
+    "pusher-js": "^8.0.2",
+    "webrtc-adapter": "^8.2.2"
   }
 }
