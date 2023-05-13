@@ -43,6 +43,7 @@ class Signal extends EventEmitter{
 
 	sendIce(ice: string) {
 		if (this.socketId === undefined) { 
+			console.log("No socket id")
 			setTimeout(() => {
 				this.sendIce(ice);
 			}, 2500);
